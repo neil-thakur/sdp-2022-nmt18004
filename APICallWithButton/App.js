@@ -142,5 +142,3 @@ tutorial links or helpful websites:
   Postman App
   https://reactjs.org/docs/hooks-state.html
  */
-
-/* just to make sure that this ends up in GitHub repository */
