@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Text, View, TouchableOpacity, Image, Platform, TextInput } from 'react-native';
+import { Text, View, TouchableOpacity, Image, Platform, TextInput, StyleSheet } from 'react-native';
 import { Camera } from 'expo-camera';
 import * as MediaLibrary from 'expo-media-library';
 import AWS from 'aws-sdk/dist/aws-sdk-react-native';
@@ -13,10 +13,10 @@ export default function CameraScreen() {
   const [camera, setCamera] = useState(null);
   const [type, setType] = useState(Camera.Constants.Type.back);
   const [imageUri, setImageUri] = useState(null);
-  //const [photoName, setPhotoName] = useState(null);
+  const [photoName, setPhotoName] = useState(null);
 
-  const photoName = 'LED_remote.jpg';
-  const NEILaccessKeyId = "***";
+  //const photoName = 'sensiron.jpg';
+  const NEILaccessKeyId = '***'
   const NEILsecretAccessKey = "***";
 
   useEffect(() => {
@@ -25,6 +25,11 @@ export default function CameraScreen() {
       setHasPermission(status === 'granted');
     })();
   }, []);
+
+  const handleInputChange = (text) => {
+    console.log(text);
+    setPhotoName(text);
+  };
 
   const uploadToS3 = async (tmpURI) => {
     const options = {
@@ -43,11 +48,11 @@ export default function CameraScreen() {
   
     const response = await RNS3.put(file, options).then(response => {
       if (response.status !== 201) {
-        throw new Error("FAILURE: failed to upload image to S3!");
+        throw new Error("FAILURE: Failed to upload image to S3!");
       }
       else {
         console.log(
-          "SUCCESS: successfully uploaded image to S3! \n\tS3 Bucket URL: ",
+          "SUCCESS: Successfully uploaded image to S3! \n\tS3 Bucket URL: ",
           response.body.postResponse.location
         );
       }
@@ -106,6 +111,7 @@ export default function CameraScreen() {
       await getTextractAnalysis();
       console.log('SUCCESS: Recieved AWS Textract document analysis of S3 object!')
       setImageUri(null);
+      setPhotoName(null);
     }
   }
 
@@ -126,7 +132,7 @@ export default function CameraScreen() {
   }
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{flex:1}}>
       <Camera style={{ flex: 1 }} ref={ref => setCamera(ref)} type={type}>
         <View
           style={{
@@ -159,7 +165,16 @@ export default function CameraScreen() {
           </TouchableOpacity>
         </View>
       </Camera>
+      {imageUri && photoName === null &&
+      <TextInput
+        style={{ borderColor: 'purple', backgroundColor: 'white',position: 'absolute', bottom: '85%', left: '24%', width: 227, height: 40}}
+        value={photoName}
+        onSubmitEditing={(value) => handleInputChange(value.nativeEvent.text)}
+        placeholder={"filename.jpg"}
+      />
+      }
       {imageUri && <Image style={{ flex: 1 }} source={{ uri: imageUri }} />}
+      
       {imageUri && 
         <TouchableOpacity
           style={{
@@ -184,7 +199,21 @@ export default function CameraScreen() {
           <Text style={{ fontSize: 20, color: 'white', textAlign: 'center'}}>Cancel</Text>
         </TouchableOpacity>
       }
-      
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  input: {
+    height: 40,
+    width: '80%',
+    borderColor: 'gray',
+    borderWidth: 1,
+    paddingHorizontal: 10,
+  },
+});
