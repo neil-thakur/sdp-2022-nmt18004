@@ -1,0 +1,33 @@
+{
+  "name": "chatgpttextractexample",
+  "version": "1.0.0",
+  "main": "node_modules/expo/AppEntry.js",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web"
+  },
+  "dependencies": {
+    "aws-amplify": "^5.0.16",
+    "aws-sdk": "^2.1328.0",
+    "expo": "~48.0.5",
+    "expo-camera": "^13.2.1",
+    "expo-image-picker": "^14.1.1",
+    "expo-media-library": "^15.2.2",
+    "expo-status-bar": "~1.4.4",
+    "react": "18.2.0",
+    "react-native": "0.71.3",
+    "react-native-async-storage": "^0.0.1",
+    "react-native-aws3": "^0.0.9",
+    "react-native-camera": "^4.2.1",
+    "react-native-uuid": "^2.0.1",
+    "react-native-vision-camera": "^2.15.4",
+    "rn-fetch-blob": "^0.12.0",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.20.0"
+  },
+  "private": true
+}
