@@ -6,7 +6,7 @@ import { Camera } from 'expo-camera';
 import * as MediaLibrary from 'expo-media-library';
 import AWS from 'aws-sdk/dist/aws-sdk-react-native';
 import { RNS3 } from 'react-native-aws3';
-
+import credentials from './aws-credentials.json';
 
 const Tab = createBottomTabNavigator();
 
@@ -77,14 +77,15 @@ const CameraWithButtonsScreen = ({ textractDump, setTextractDump }) => {
     })();
   }, []);
 
-  const NEILaccessKeyId = '***'
-  const NEILsecretAccessKey = "***";
+  const NEILaccessKeyId = credentials.accessKeyId;
+  const NEILsecretAccessKey = credentials.secretAccessKey;
+  const NEILregion = credentials.region;
 
   const uploadToS3 = async (tmpURI) => {
     const options = {
       /* keyPrefix: 'uploads/', */
       bucket: 'neil-thakur-test-bucket-2',
-      region: 'us-east-1',
+      region: NEILregion,
       accessKey: NEILaccessKeyId,
       secretKey: NEILsecretAccessKey,
       successActionStatus: 201,
@@ -118,29 +119,73 @@ const CameraWithButtonsScreen = ({ textractDump, setTextractDump }) => {
     AWS.config.update({
       accessKeyId: NEILaccessKeyId,
       secretAccessKey: NEILsecretAccessKey,
-      region: "us-east-1"
+      region: NEILregion
     }); 
 
-    const params = {
-      Document: {
-        S3Object: {
-          Bucket: 'neil-thakur-test-bucket-2',
-          Name: photoName
-        },
-      }
-    };
+    var doDetectDocumentText = true;
+    var doAnalyzeDocument = !doDetectDocumentText;
 
-    var textract = new AWS.Textract({region: 'us-east-1'});
-    const response = await textract.detectDocumentText(params, (err, data) => {
-      if (err) {
-        console.log('FAILURE: Error analyzing photo:', err);
-      } else {
-        /* console.log('Extracted text:', data.Text); */
-        /* console.log('Text layout:', data.Blocks); */
-        console.log('SUCCESS: Text detected:', data.Blocks.map(block => block.Text).join('\n\n'));
-        setTextractDump(data.Blocks.map(block => block.Text).join('\n\n'));
-      }
-    });
+    if(doDetectDocumentText)
+    {
+      const params = {
+        Document: {
+          S3Object: {
+            Bucket: 'neil-thakur-test-bucket-2',
+            Name: photoName
+          },
+        }, 
+      };
+  
+      var textract = new AWS.Textract({region: 'us-east-1'});
+      const response = await textract.detectDocumentText(params, (err, data) => {
+        if (err) {
+          console.log('FAILURE: Error analyzing photo:', err);
+        } else {
+          /* console.log('Extracted text:', data.Text); */
+          /* console.log('Text layout:', data.Blocks); */
+          
+          // detectDocumentText() --> detects text in a document
+          console.log('SUCCESS: Text detected:', data.Blocks.map(block => block.Text).join('\n\n'));
+          setTextractDump(data.Blocks.map(block => block.Text).join('\n\n'));
+  
+          // analyzeDocument() --> detects forms, tables, and extracts text
+          // console.log(JSON.stringify(data.Blocks.filter(block => block.BlockType === 'KEY_VALUE_SET'), null, 2));
+          // setTextractDump(data.Blocks.filter(block => block.BlockType === 'KEY_VALUE_SET'));
+        }
+      });
+    }
+
+    if(doAnalyzeDocument)
+    {
+      const params = {
+        Document: {
+          S3Object: {
+            Bucket: 'neil-thakur-test-bucket-2',
+            Name: photoName
+          },
+        }, 
+        FeatureTypes: ['FORMS'] //only works for analyzeDocument
+      };
+  
+      var textract = new AWS.Textract({region: 'us-east-1'});
+      const response = await textract.analyzeDocument(params, (err, data) => {
+        if (err) {
+          console.log('FAILURE: Error analyzing photo:', err);
+        } else {
+          /* console.log('Extracted text:', data.Text); */
+          /* console.log('Text layout:', data.Blocks); */
+          
+          // detectDocumentText() --> detects text in a document
+          //console.log('SUCCESS: Text detected:', data.Blocks.map(block => block.Text).join('\n\n'));
+          //setTextractDump(data.Blocks.map(block => block.Text).join('\n\n'));
+  
+          // analyzeDocument() --> detects forms, tables, and extracts text
+          console.log(JSON.stringify(data.Blocks.filter(block => block.BlockType === 'KEY_VALUE_SET'), null, 2));
+          setTextractDump(data.Blocks.filter(block => block.BlockType === 'KEY_VALUE_SET'));
+        }
+      });
+    }
+    
     return true;
   }
 

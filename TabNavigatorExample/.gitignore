@@ -10,6 +10,9 @@ npm-debug.*
 *.orig.*
 web-build/
 
+# AWS credentials
+aws-credentials.json
+
 # macOS
 .DS_Store
 
