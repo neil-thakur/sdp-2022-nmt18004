@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
-import { Text, View, TouchableOpacity, Image, TextInput, ScrollView } from 'react-native';
+import AWS from 'aws-sdk/dist/aws-sdk-react-native';
 import { Camera } from 'expo-camera';
 import * as MediaLibrary from 'expo-media-library';
-import AWS from 'aws-sdk/dist/aws-sdk-react-native';
+import React, { useEffect, useState } from 'react';
+import { Image, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { RNS3 } from 'react-native-aws3';
 import credentials from './aws-credentials.json';
 
@@ -13,8 +13,8 @@ const Tab = createBottomTabNavigator();
 const MealHistoryScreen = ({ textractDump, setTextractDump }) => {
   return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-      <ScrollView style={{borderColor: 'black', borderBottomWidth: 5, borderTopWidth: 5, borderLeftWidth: 5, borderRightWidth: 5}}>
-        <Text style={{textAlign: 'center'}}>{textractDump}</Text>
+      <ScrollView style={{ borderColor: 'black', borderBottomWidth: 5, borderTopWidth: 5, borderLeftWidth: 5, borderRightWidth: 5 }}>
+        <Text style={{ textAlign: 'center' }}>{textractDump}</Text>
       </ScrollView>
     </View>
   );
@@ -45,18 +45,18 @@ const CameraScreen = () => {
 
   return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-      <Camera style={{ flex: 0.75, width: '80%'}}  type={Camera.Constants.Type.back}/>
+      <Camera style={{ flex: 0.75, width: '80%' }} type={Camera.Constants.Type.back} />
     </View>
   );
 };
 
 const ViewExampleScreen = () => {
-  return(
+  return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-      <View style={{ flex: 0.5, alignItems: 'center', justifyContent: 'center', borderColor:'blue', borderWidth:1 }}>
+      <View style={{ flex: 0.5, alignItems: 'center', justifyContent: 'center', borderColor: 'blue', borderWidth: 1 }}>
         <Text>dummy place holder text top view</Text>
       </View>
-      <View style={{ flex: 0.5, alignItems: 'center', justifyContent: 'center', borderColor:'purple', borderWidth:1 }}>
+      <View style={{ flex: 0.5, alignItems: 'center', justifyContent: 'center', borderColor: 'purple', borderWidth: 1 }}>
         <Text>dummy place holder text bottom view</Text>
       </View>
     </View>
@@ -95,7 +95,7 @@ const CameraWithButtonsScreen = ({ textractDump, setTextractDump }) => {
       name: photoName,
       type: 'image/jpeg',
     };
-  
+
     const response = await RNS3.put(file, options).then(response => {
       if (response.status !== 201) {
         throw new Error("FAILURE: Failed to upload image to S3!");
@@ -106,10 +106,10 @@ const CameraWithButtonsScreen = ({ textractDump, setTextractDump }) => {
           response.body.postResponse.location
         );
       }
-      })
-      .catch(error => {console.log(error)})
+    })
+      .catch(error => { console.log(error) })
       .progress((e) => console.log(e.loaded / e.total)
-    );
+      );
 
     return true;
   };
@@ -120,72 +120,69 @@ const CameraWithButtonsScreen = ({ textractDump, setTextractDump }) => {
       accessKeyId: NEILaccessKeyId,
       secretAccessKey: NEILsecretAccessKey,
       region: NEILregion
-    }); 
+    });
 
     var doDetectDocumentText = true;
     var doAnalyzeDocument = !doDetectDocumentText;
 
-    if(doDetectDocumentText)
-    {
+    if (doDetectDocumentText) {
       const params = {
         Document: {
           S3Object: {
             Bucket: 'neil-thakur-test-bucket-2',
             Name: photoName
           },
-        }, 
+        },
       };
-  
-      var textract = new AWS.Textract({region: 'us-east-1'});
+
+      var textract = new AWS.Textract({ region: 'us-east-1' });
       const response = await textract.detectDocumentText(params, (err, data) => {
         if (err) {
           console.log('FAILURE: Error analyzing photo:', err);
         } else {
-          /* console.log('Extracted text:', data.Text); */
-          /* console.log('Text layout:', data.Blocks); */
-          
-          // detectDocumentText() --> detects text in a document
-          console.log('SUCCESS: Text detected:', data.Blocks.map(block => block.Text).join('\n\n'));
-          setTextractDump(data.Blocks.map(block => block.Text).join('\n\n'));
-  
-          // analyzeDocument() --> detects forms, tables, and extracts text
-          // console.log(JSON.stringify(data.Blocks.filter(block => block.BlockType === 'KEY_VALUE_SET'), null, 2));
-          // setTextractDump(data.Blocks.filter(block => block.BlockType === 'KEY_VALUE_SET'));
+          // // detectDocumentText() --> detects text in a document
+          // console.log('SUCCESS: Text detected:', data.Blocks.map(block => block.Text).join('\n\n'));
+          // setTextractDump(data.Blocks.map(block => block.Text).join('\n\n'));    
+          const blocks = data.Blocks;
+          var textArray = []
+          for (let i = 0; i < blocks.length; i++) {
+            if(blocks[i].BlockType === 'LINE') {
+              textArray.push(blocks[i].Text);
+            }
+          }
+          const lowercaseArray = textArray.map(function(item){
+            return item.toLowerCase();
+          })
+          console.log(lowercaseArray);
+          setTextractDump(lowercaseArray.join(''));
         }
       });
     }
 
-    if(doAnalyzeDocument)
-    {
+    if (doAnalyzeDocument) {
       const params = {
         Document: {
           S3Object: {
             Bucket: 'neil-thakur-test-bucket-2',
             Name: photoName
           },
-        }, 
+        },
         FeatureTypes: ['FORMS'] //only works for analyzeDocument
       };
-  
-      var textract = new AWS.Textract({region: 'us-east-1'});
+
+      var textract = new AWS.Textract({ region: 'us-east-1' });
       const response = await textract.analyzeDocument(params, (err, data) => {
         if (err) {
           console.log('FAILURE: Error analyzing photo:', err);
         } else {
-          /* console.log('Extracted text:', data.Text); */
-          /* console.log('Text layout:', data.Blocks); */
-          
-          // detectDocumentText() --> detects text in a document
-          //console.log('SUCCESS: Text detected:', data.Blocks.map(block => block.Text).join('\n\n'));
-          //setTextractDump(data.Blocks.map(block => block.Text).join('\n\n'));
-  
           // analyzeDocument() --> detects forms, tables, and extracts text
-          console.log(JSON.stringify(data.Blocks.filter(block => block.BlockType === 'KEY_VALUE_SET'), null, 2));
-          setTextractDump(data.Blocks.filter(block => block.BlockType === 'KEY_VALUE_SET'));
+          // console.log(JSON.stringify(data.Blocks.filter(block => block.BlockType === 'KEY_VALUE_SET'), null, 2));
+          // setTextractDump(data.Blocks.filter(block => block.BlockType === 'KEY_VALUE_SET'));
+          console.log("DEAD");   
         }
       });
     }
-    
+
     return true;
   }
 
@@ -197,8 +194,7 @@ const CameraWithButtonsScreen = ({ textractDump, setTextractDump }) => {
   };
 
   const savePicture = async () => {
-    if(imageUri !== null)
-    {
+    if (imageUri !== null) {
       MediaLibrary.saveToLibraryAsync(imageUri);
       console.log('SUCCESS: Photo saved to library. \n\tFile URI: ', imageUri);
       await uploadToS3(imageUri);
@@ -218,8 +214,8 @@ const CameraWithButtonsScreen = ({ textractDump, setTextractDump }) => {
   const flipCamera = async () => {
     setType(
       type === Camera.Constants.Type.back
-      ? Camera.Constants.Type.front
-      : Camera.Constants.Type.back
+        ? Camera.Constants.Type.front
+        : Camera.Constants.Type.back
     );
   }
 
@@ -230,23 +226,23 @@ const CameraWithButtonsScreen = ({ textractDump, setTextractDump }) => {
     return <Text>No access to camera</Text>;
   }
 
-  return(
+  return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
       {imageUri === null &&
-      <Camera 
-        style={{ flex: 1, width: '80%', borderColor:'red', borderWidth:5 }}  
-        ref={ref => setCamera(ref)}
-        type={type}
-      />
+        <Camera
+          style={{ flex: 1, width: '80%', borderColor: 'red', borderWidth: 5 }}
+          ref={ref => setCamera(ref)}
+          type={type}
+        />
       }
 
-      {imageUri && 
-      <View style={{ flex: 1, width: '95%', alignItems: 'center', justifyContent: 'center', borderColor:'blue', borderWidth:1, backgroundColor:'grey' }}>
-        <Image style={{ flex: 1, height: "75%", width:"75%", resizeMode: 'contain' }} source={{ uri: imageUri }} />
-      </View>
+      {imageUri &&
+        <View style={{ flex: 1, width: '95%', alignItems: 'center', justifyContent: 'center', borderColor: 'blue', borderWidth: 1, backgroundColor: 'grey' }}>
+          <Image style={{ flex: 1, height: "75%", width: "75%", resizeMode: 'contain' }} source={{ uri: imageUri }} />
+        </View>
       }
 
-      <View style={{ flex: 0.5, alignItems: 'center', justifyContent: 'center', borderColor:'#4E4C67', borderWidth:4 }}>
+      <View style={{ flex: 0.5, alignItems: 'center', justifyContent: 'center', borderColor: '#4E4C67', borderWidth: 4 }}>
         {imageUri === null &&
           <TouchableOpacity
             style={{
@@ -259,7 +255,7 @@ const CameraWithButtonsScreen = ({ textractDump, setTextractDump }) => {
           </TouchableOpacity>
         }
         <Text></Text>
-        {imageUri === null &&  
+        {imageUri === null &&
           <TouchableOpacity
             style={{
               backgroundColor: '#C2AFF0',
@@ -267,35 +263,35 @@ const CameraWithButtonsScreen = ({ textractDump, setTextractDump }) => {
               alignSelf: "center"
             }}
             onPress={flipCamera}>
-            <Text style={{ fontSize: 20, color: 'white', textAlign: 'center'}}> Flip Camera </Text>
+            <Text style={{ fontSize: 20, color: 'white', textAlign: 'center' }}> Flip Camera </Text>
           </TouchableOpacity>
         }
         <Text></Text>
-        {imageUri && 
+        {imageUri &&
           <TouchableOpacity
             style={{
               backgroundColor: '#48AD59',
             }}
             onPress={savePicture}
           >
-            <Text style={{ fontSize: 20, color: 'white', textAlign: 'center'}}>Save</Text>
+            <Text style={{ fontSize: 20, color: 'white', textAlign: 'center' }}>Save</Text>
           </TouchableOpacity>
         }
         <Text></Text>
-        {imageUri && 
+        {imageUri &&
           <TouchableOpacity
             style={{
               backgroundColor: '#E73323',
             }}
-            onPress={() => {setImageUri(null)}}
+            onPress={() => { setImageUri(null) }}
           >
-            <Text style={{ fontSize: 20, color: 'white', textAlign: 'center'}}>Cancel</Text>
+            <Text style={{ fontSize: 20, color: 'white', textAlign: 'center' }}>Cancel</Text>
           </TouchableOpacity>
         }
         <Text></Text>
         {imageUri && photoName === null &&
           <TextInput
-            style={{ borderColor: 'purple', backgroundColor: '#DCD6F7', width: 227, height: 40}}
+            style={{ borderColor: 'purple', backgroundColor: '#DCD6F7', width: 227, height: 40 }}
             value={photoName}
             onSubmitEditing={(value) => handleInputChange(value.nativeEvent.text)}
             placeholder={"Enter 'filename.jpg'"}
@@ -317,7 +313,7 @@ export default App = () => {
         {/* <Tab.Screen name="Camera w/ Button" component={CameraWithButtonsScreen}  /> */}
         <Tab.Screen name="Camera w/ Button">
           {(props) => <CameraWithButtonsScreen textractDump={textractDump} setTextractDump={setTextractDump} />}
-        </Tab.Screen> 
+        </Tab.Screen>
         {/* <Tab.Screen name="Meal History" component={MealHistoryScreen} initialParams={{textractDump: textractDump}} /> */}
         <Tab.Screen name="Meal History">
           {(props) => <MealHistoryScreen textractDump={textractDump} setTextractDump={setTextractDump} />}
