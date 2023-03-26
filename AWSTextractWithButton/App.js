@@ -1,18 +1,21 @@
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, TouchableHighlight, ScrollView } from 'react-native';
 import React from 'react';
-import { Amplify } from 'aws-amplify'
-import awsconfig from './src/aws-exports'
+import { Amplify } from 'aws-amplify';
+import awsconfig from './src/aws-exports';
+import { Textract } from 'aws-sdk'
+import  AWS from 'aws-sdk'
 
-Amplify.configure(awsconfig)
+//Amplify.configure(awsconfig)
 
 export default function App() {
 
   let [textractDump, setTextractDump] = React.useState('')
 
-  const doSomething = () => {
-    
+  const texttractMagic = () => {
     var AWS = require('aws-sdk');
+
+    AWS.config.update({region: 'us-east-1'});
 
     var setCredentials = AWS.config.update({
       accessKeyId: "***",
@@ -56,7 +59,7 @@ export default function App() {
         </Text>
         <StatusBar style="auto" />
         <Text></Text>
-        <TouchableHighlight onPress={doSomething} style ={{alignItems: 'center'}}>
+        <TouchableHighlight onPress={texttractMagic} style ={{alignItems: 'center'}}>
           <View style={styles.button}>
             <Text style={styles.buttonText}>Use Textract API</Text>
           </View>
